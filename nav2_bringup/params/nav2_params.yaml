@@ -24,14 +24,18 @@ amcl:
     pf_z: 0.99
     recovery_alpha_fast: 0.0
     recovery_alpha_slow: 0.0
-    random_seed: -1
     resample_interval: 1
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
     save_pose_rate: 0.5
+    set_initial_pose: true
+    initial_pose:
+      x: -2.0
+      y: -0.5
+      z: 0.0
+      yaw: 0.0
     sigma_hit: 0.2
     tf_broadcast: true
     transform_tolerance: 1.0
-    introspection_mode: "disabled"
     update_min_a: 0.2
     update_min_d: 0.25
     z_hit: 0.5
@@ -146,7 +150,7 @@ controller_server:
       az_max: 3.5
       vx_std: 0.2
       vy_std: 0.2
-      wz_std: 0.4
+      wz_std: 1.5
       vx_max: 0.5
       vx_min: -0.35
       vy_max: 0.5
@@ -157,7 +161,7 @@ controller_server:
       visualize: true
       publish_optimal_trajectory: true
       regenerate_noises: true
-      motion_model: "diff_drive"
+      motion_model: "DiffDrive"
       diff_drive:
         plugin: "mppi::DiffDriveMotionModel"
       TrajectoryVisualizer:
@@ -252,7 +256,7 @@ local_costmap:
       filters: ["keepout_filter"]
       keepout_filter:
         plugin: "nav2_costmap_2d::KeepoutFilter"
-        enabled: KEEPOUT_ZONE_ENABLED
+        enabled: False
         filter_info_topic: "keepout_costmap_filter_info"
         override_lethal_cost: true
         lethal_override_cost: 200
@@ -306,13 +310,13 @@ global_costmap:
       filters: ["keepout_filter", "speed_filter"]
       keepout_filter:
         plugin: "nav2_costmap_2d::KeepoutFilter"
-        enabled: KEEPOUT_ZONE_ENABLED
+        enabled: False
         filter_info_topic: "keepout_costmap_filter_info"
         override_lethal_cost: true
         lethal_override_cost: 200
       speed_filter:
         plugin: "nav2_costmap_2d::SpeedFilter"
-        enabled: SPEED_ZONE_ENABLED
+        enabled: False
         filter_info_topic: "speed_costmap_filter_info"
         speed_limit_topic: "speed_limit"
       obstacle_layer:
@@ -395,7 +399,7 @@ planner_server:
     costmap_update_timeout: 1.0
     introspection_mode: "disabled"
     GridBased:
-      plugin: "nav2_navfn_planner::NavfnPlanner"
+      plugin: "nav2_navfn_planner/NavfnPlanner"
       tolerance: 0.5
       use_astar: false
       allow_unknown: true
@@ -430,21 +434,21 @@ behavior_server:
     behavior_plugins:
       ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
     spin:
-      plugin: "nav2_behaviors::Spin"
+      plugin: "nav2_behaviors/Spin"
     backup:
-      plugin: "nav2_behaviors::BackUp"
+      plugin: "nav2_behaviors/BackUp"
       acceleration_limit: 2.5
       deceleration_limit: -2.5
       minimum_speed: 0.10
     drive_on_heading:
-      plugin: "nav2_behaviors::DriveOnHeading"
+      plugin: "nav2_behaviors/DriveOnHeading"
       acceleration_limit: 2.5
       deceleration_limit: -2.5
       minimum_speed: 0.10
     wait:
-      plugin: "nav2_behaviors::Wait"
+      plugin: "nav2_behaviors/Wait"
     assisted_teleop:
-      plugin: "nav2_behaviors::AssistedTeleop"
+      plugin: "nav2_behaviors/AssistedTeleop"
     local_frame: odom
     global_frame: map
     robot_base_frame: base_link
