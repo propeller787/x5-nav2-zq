@@ -85,9 +85,11 @@ def generate_launch_description():
     nav2_joy_dir = get_package_share_directory('nav2_joy_goal')
 
     default_map = os.path.join(bringup_dir, 'maps', 'turtlebot3_world.yaml')
-    # 用本仓库源码的 nav2_params.yaml (含 MPPI), 不用 apt 的 (那是 DWB).
-    # default_params = os.path.join(bringup_dir, 'params', 'nav2_params.yaml')
-    default_params = '/home/howard/code/navigation2/nav2_bringup/params/nav2_params.yaml'
+    # 仓库内自定义的 nav2_joy_simulation_params.yaml 复制自 nav2_params.yaml,
+    # 只在 local_costmap 加回 static_layer / track_unknown_space / footprint /
+    # obstacle_max_range, 让 simple_loopback_sim 不要跑出地图边界; 主 yaml
+    # 保持 apt 默认, mppi_*_demo.launch.py 跑 SLAM 不会被这些参数拖慢.
+    default_params = os.path.join(nav2_joy_dir, 'config', 'nav2_joy_simulation_params.yaml')
     default_joy_teleop_params = os.path.join(nav2_joy_dir, 'config', 'joy_teleop.yaml')
     default_graph = os.path.join(bringup_dir, 'graphs', 'turtlebot3_graph.geojson')
 
