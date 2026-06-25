@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>nav2_joy_goal</name>
+  <version>1.0.0</version>
+  <description>
+    Keyboard-to-joystick teleop package for Nav2. Provides a node that reads
+    keyboard input in raw terminal mode and publishes sensor_msgs/Joy messages
+    (simulating a physical joystick) plus a converter that maps the joystick
+    state to geometry_msgs/Twist. Designed as a drop-in replacement for the
+    "click on the route to set a goal" workflow, letting you drive the robot
+    in simulation with the keyboard.
+  </description>
+  <maintainer email="dev@example.com">nav2_joy maintainer</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

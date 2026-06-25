@@ -1,0 +1,85 @@
+# Copyright (c) 2026, nav2_joy authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Default parameter file for the nav2_joy keyboard teleop stack.
+#
+# The two nodes (`nav2_joy_teleop` and `joy_to_twist`) can be loaded
+# individually as well, but this file is convenient when the package is
+# used as a drop-in replacement for `teleop_twist_keyboard`:
+#
+#   ros2 launch nav2_joy nav2_joy_teleop_launch.py \
+#       params_file:=/path/to/this/file.yaml
+#
+# `nav2_joy_teleop` parameters
+# ----------------------------
+nav2_joy_teleop:
+  ros__parameters:
+    # Topic the synthesized Joy is published on. The downstream
+    # `joy_to_twist` must subscribe to the same topic.
+    joy_topic: "/joy"
+
+    # Frequency of Joy publication in Hz.
+    publish_rate: 50.0
+
+    # Per-tick ramp (in axis-units/second) used to smooth the
+    # transition between the previous and the new axis target. With
+    # publish_rate=50 and axis_ramp=4 the axis needs 1/4 second to
+    # go from 0 to 1. Set to a very large value to disable ramping.
+    axis_ramp: 4.0
+
+    # Layout of the synthesized Joy message. The keyboard emulator
+    # fills the first 6 axes and 4 buttons; downstream nodes that
+    # use more (e.g. real joysticks) can still consume the messages.
+    num_axes: 6
+    num_buttons: 4
+
+    # Index of the "dead-man" button. Holding space publishes
+    # buttons[enable_button_index_] = 1; releasing it zeros it.
+    enable_button_index: 0
+
+# `joy_to_twist` parameters
+# -------------------------
+joy_to_twist:
+  ros__parameters:
+    # Input / output topics
+    joy_topic: "/joy"
+    cmd_vel_topic: "/cmd_vel"
+
+    # Axis indices (default keyboard layout)
+    axis_linear_x: 0
+    axis_linear_y: 1
+    axis_linear_z: 2
+    axis_angular_x: 3
+    axis_angular_y: 4
+    axis_angular_z: 5
+
+    # Per-axis scale, applied AFTER the 0.05 deadband. Units are
+    # m/s for linear and rad/s for angular. For a TurtleBot3, the
+    # defaults below are conservative.
+    scale_linear_x: 0.22
+    scale_linear_y: 0.0
+    scale_linear_z: 0.0
+    scale_angular_x: 0.0
+    scale_angular_y: 0.0
+    scale_angular_z: 1.0
+
+    # Buttons
+    enable_button: 0
+    # If /joy stops arriving for longer than `deadman_timeout`
+    # seconds, publish a zero twist so the robot stops. Acts as a
+    # safety net if the keyboard node dies.
+    deadman_timeout: 0.5
+    # Optional "turbo" button. If <0 (default), turbo is disabled.
+    turbo_button: -1
+    turbo_scale: 1.5
