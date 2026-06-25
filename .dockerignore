@@ -9,4 +9,18 @@
 .gitignore
 **.Dockerfile
 **Dockerfile
+docker/       # 不把 docker 目录复制进容器
 doc/
+build/
+install/
+log/
+.vscode/
+.idea/
+*.pyc
+__pycache__/
+**/CMakeFiles/
+**/*.o
+**/*.so
+
+# 本机额外的非官方目录 (含 wheelchair_nav 等用户包, 会污染 rosdep/colcon 扫描)
+nav2_zhengqi/

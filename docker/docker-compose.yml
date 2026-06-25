@@ -1,0 +1,38 @@
+version: '3.8'
+
+# 沙盒/开发机都用同一份配置
+# 启动: cd docker && docker-compose up -d && docker-compose exec nav2 bash
+#
+# NAV2_ROOT 默认值是仓库根, 也可通过环境变量覆盖:
+#   export NAV2_ROOT=/path/to/your/navigation2
+#   docker-compose -f docker/docker-compose.yml up -d
+#   或在 docker/.env 文件里写 NAV2_ROOT=...
+services:
+  nav2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: nav2_mppi:dev
+    container_name: nav2_mppi_dev
+    # 沙盒里用 browser 看, 暴露 6080 端口
+    ports:
+      - "6080:6080"   # noVNC (浏览器)
+      - "5900:5900"   # VNC (client)
+    environment:
+      - TURTLEBOT3_MODEL=waffle
+      - ROS_DOMAIN_ID=0
+      - DISPLAY=:1
+    # 挂载仓库根目录 (改 launch 不用 rebuild, 自动同步)
+    # NAV2_ROOT 必须设置; 默认用 .env 中设置的值
+    volumes:
+      - ${NAV2_ROOT}:/root/ws/src/navigation2
+      - ${NAV2_ROOT}/logs:/root/ws/log
+      # 关键: 将本地改的 launch 文件挂载到 apt 版 nav2_mppi_controller 下
+      - ${NAV2_ROOT}/nav2_mppi_controller/launch:/opt/ros/humble/share/nav2_mppi_controller/launch
+    # GPU (如果有): 沙盒里通常没 GPU, Gazebo 跑 CPU 渲染
+    # runtime: nvidia
+    # environment:
+    #   - NVIDIA_VISIBLE_DEVICES=all
+    stdin_open: true
+    tty: true
+    command: bash

@@ -16,8 +16,9 @@ GOAL mode (default):
   w       target 1.0m forward
   s       target 0.5m backward
   a / d   target 0.5m forward + heading +/- 30 deg
-  q / e   target 1.0m forward + heading +/- 30 deg
+  q / e   target 1.0m forward + heading +/- 30 deg + lateral 0.25m
   c       cancel current NavigateToPose goal
+  p       toggle planner mode (quintic <-> navfn)
 
 TELEOP mode (direct /cmd_vel, hold-to-move with auto-decay):
   i / k   forward / backward full speed
@@ -49,6 +50,8 @@ from rclpy.node import Node
 
 from geometry_msgs.msg import PoseStamped, Quaternion, Twist
 from nav2_msgs.action import NavigateToPose
+from rcl_interfaces.srv import SetParameters
+from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
 
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
@@ -81,8 +84,12 @@ class KeyboardGoalSetter(Node):
         self._cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self._current_handle = None
         self._mode = 'goal'         # 'goal' or 'teleop'
+        self._planner_mode = 'quintic'  # 'quintic' or 'navfn'
         self._twist = Twist()
         self._deadman = False
+        # /planner_server exposes the standard set_parameters service
+        self._set_param_client = self.create_client(
+            SetParameters, '/planner_server/set_parameters')
 
     # ---------------------------------------------------------------- goal
     def _get_robot_pose(self):
@@ -103,6 +110,20 @@ class KeyboardGoalSetter(Node):
         self._current_handle = handle
         handle.get_result_async().add_done_callback(
             lambda _: setattr(self, '_current_handle', None))
+
+    def _toggle_planner_mode(self):
+        self._planner_mode = 'navfn' if self._planner_mode == 'quintic' else 'quintic'
+        if not self._set_param_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().warn('set_parameters service not available')
+            return
+        req = SetParameters.Request()
+        p = Parameter()
+        p.name = 'GridBased.mode'
+        p.value = ParameterValue(string_value=self._planner_mode, type=ParameterType.PARAMETER_STRING)
+        req.parameters.append(p)
+        self._set_param_client.call_async(req)
+        print(f'\r  -> planner mode: {self._planner_mode}              ',
+              end='', flush=True)
 
     def _send_goal(self, x, y, yaw):
         if not self._client.wait_for_server(timeout_sec=5.0):
@@ -140,15 +161,19 @@ class KeyboardGoalSetter(Node):
             x -= STEP_XY * math.cos(yaw); y -= STEP_XY * math.sin(yaw)
         elif key == 'a':
             x += STEP_XY * math.cos(yaw); y += STEP_XY * math.sin(yaw)
+            x -= STEP_XY * math.sin(yaw) * 0.5; y += STEP_XY * math.cos(yaw) * 0.5
             yaw += STEP_YAW
         elif key == 'd':
             x += STEP_XY * math.cos(yaw); y += STEP_XY * math.sin(yaw)
+            x += STEP_XY * math.sin(yaw) * 0.5; y -= STEP_XY * math.cos(yaw) * 0.5
             yaw -= STEP_YAW
         elif key == 'q':
             x += STEP_XY * math.cos(yaw) * 2.0; y += STEP_XY * math.sin(yaw) * 2.0
+            x -= STEP_XY * math.sin(yaw) * 0.5; y += STEP_XY * math.cos(yaw) * 0.5
             yaw += STEP_YAW
         elif key == 'e':
             x += STEP_XY * math.cos(yaw) * 2.0; y += STEP_XY * math.sin(yaw) * 2.0
+            x += STEP_XY * math.sin(yaw) * 0.5; y -= STEP_XY * math.cos(yaw) * 0.5
             yaw -= STEP_YAW
         else:
             return
@@ -197,7 +222,8 @@ class KeyboardGoalSetter(Node):
         if self._mode == 'goal':
             print('  w 1.0m fwd  s 0.5m back')
             print('  a/d fwd 0.5m + heading +/-30deg')
-            print('  q/e fwd 1.0m + heading +/-30deg  c cancel')
+            print('  q/e fwd 1.0m + heading +/-30deg + lateral 0.25m  c cancel')
+            print(f'  p toggle global planner (current: {self._planner_mode})')
         else:
             print('  space deadman (hold to enable), then:')
             print('  i/k fwd/back  j/l rotate  u/o diagonal')
@@ -230,6 +256,9 @@ class KeyboardGoalSetter(Node):
                             self._current_handle.cancel_goal_async()
                             self._current_handle = None
                         self._print_mode()
+                        continue
+                    if key == 'p':
+                        self._toggle_planner_mode()
                         continue
                     if self._mode == 'goal':
                         self._handle_goal_key(key)

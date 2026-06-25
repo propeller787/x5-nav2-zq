@@ -1,0 +1,13 @@
+<library path="quintic_planner">
+  <class
+    name="nav2_joy::QuinticPlanner"
+    type="nav2_joy::QuinticPlanner"
+    base_class_type="nav2_core::GlobalPlanner">
+    <description>
+      A "fake" global planner that always returns a smooth C2 quintic
+      (5th-order Hermite) polynomial curve from the current pose to the
+      goal pose. It IGNORES the costmap; obstacle avoidance is delegated
+      entirely to the local controller (e.g. MPPI).
+    </description>
+  </class>
+</library>

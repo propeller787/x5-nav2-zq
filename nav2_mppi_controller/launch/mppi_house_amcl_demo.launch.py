@@ -110,7 +110,12 @@ def generate_launch_description():
 
     # 2) Nav2 节点 (含 map_server, 走 AMCL 定位)
     #    map_server 需要 yaml_filename 参数覆盖 (params 文件里该字段为空)
-    nav2_common_params = [params_file, {'use_sim_time': use_sim_time}]
+    #    同时把 GridBased.plugin 覆盖回标准 NavfnPlanner, 不走 QuinticPlanner.
+    nav2_common_params = [
+        params_file,
+        {'use_sim_time': use_sim_time,
+         'GridBased.plugin': 'nav2_navfn_planner/NavfnPlanner'},
+    ]
     map_server_params = [
         params_file,
         {'use_sim_time': use_sim_time, 'yaml_filename': map_yaml_file},

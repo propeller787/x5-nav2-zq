@@ -14,6 +14,14 @@ find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav2_core REQUIRED)
+find_package(nav2_costmap_2d REQUIRED)
+find_package(nav2_util REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(nav2_navfn_planner REQUIRED)
 
 add_executable(nav2_joy_teleop
   src/nav2_joy_teleop.cpp
@@ -45,9 +53,42 @@ target_link_libraries(joy_to_twist PUBLIC
   ${sensor_msgs_TARGETS}
 )
 
+add_library(quintic_planner SHARED
+  src/quintic_planner.cpp
+)
+target_include_directories(quintic_planner
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+)
+ament_target_dependencies(quintic_planner
+  PUBLIC
+    geometry_msgs
+    rclcpp
+    nav2_core
+    nav2_costmap_2d
+    nav2_util
+    nav_msgs
+    pluginlib
+    tf2_ros
+    tf2_geometry_msgs
+    nav2_navfn_planner
+)
+# nav2_navfn_planner's CMake config exports its library under the same name
+# as the package, so the standard _TARGETS variable is empty; we have to
+# link the .so by absolute path. Without this the plugin loads but crashes
+# with "undefined symbol: ...NavfnPlannerC1Ev" at startup.
+find_library(_navfn_impl NAMES nav2_navfn_planner REQUIRED)
+target_link_libraries(quintic_planner PUBLIC ${_navfn_impl})
+
 install(
-  TARGETS nav2_joy_teleop joy_to_twist
+  TARGETS nav2_joy_teleop joy_to_twist quintic_planner
   RUNTIME DESTINATION lib/${PROJECT_NAME}
+  LIBRARY DESTINATION lib/${PROJECT_NAME}
+)
+
+install(FILES quintic_planner_plugin.xml
+  DESTINATION share/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/
@@ -69,5 +110,18 @@ if(BUILD_TESTING)
 endif()
 
 ament_export_include_directories(include/${PROJECT_NAME})
-ament_export_dependencies(geometry_msgs rclcpp sensor_msgs)
+ament_export_dependencies(
+  geometry_msgs
+  rclcpp
+  sensor_msgs
+  nav2_core
+  nav2_costmap_2d
+  nav2_util
+  nav_msgs
+  pluginlib
+  tf2_ros
+  tf2_geometry_msgs
+  nav2_navfn_planner
+)
+pluginlib_export_plugin_description_file(nav2_core quintic_planner_plugin.xml)
 ament_package()

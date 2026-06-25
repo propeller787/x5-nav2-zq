@@ -183,7 +183,14 @@ def generate_launch_description():
     )
 
     # 3) Nav2 节点 (无 amcl / map_server)
-    nav2_params = [params_file, {'use_sim_time': use_sim_time}]
+    #    params_file 里的 GridBased.plugin 已被 nav2_joy_simulation_launch 设
+    #    为 nav2_joy::QuinticPlanner, 本 launch 只想跑 MPPI 控制器 + 标准
+    #    NavfnPlanner 全局规划, 在这里把 plugin 覆盖回去即可, 不用动 yaml.
+    nav2_params = [
+        params_file,
+        {'use_sim_time': use_sim_time,
+         'GridBased.plugin': 'nav2_navfn_planner/NavfnPlanner'},
+    ]
     nav2_nodes = _make_nav2_nodes(nav2_params)
 
     # 4) 用 ExecuteProcess 跑 bash + `ros2 lifecycle set` 循环,
